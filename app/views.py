@@ -5,9 +5,13 @@ Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file creates your application.
 """
 
-from app import app
+from app import app,db
 from flask import render_template, request, jsonify, send_file
 import os
+from app.models import Movie
+from app.forms import MovieForm
+from werkzeug.utils import secure_filename
+from flask_wtf.csrf import generate_csrf
 
 
 ###
@@ -18,6 +22,42 @@ import os
 def index():
     return jsonify(message="This is the beginning of our API")
 
+@app.route('/api/v1/movies', methods=['POST'])
+def movies():
+    form = MovieForm()
+    result = ''
+    
+    if form.validate_on_submit():
+        title = form.title.data
+        description = form.description.data
+        poster_img = form.poster.data
+        
+        filename = secure_filename(poster_img.filename)
+        
+        result = jsonify({"message":"Movie Successfully added",
+                    "title":form.title.data,
+                    "poster": filename,
+                    "description":form.description.data}) 
+        
+        poster_img.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        
+        db.session.add(Movie(title, description, filename))
+        db.session.commit()
+        
+        return jsonify({"message":"Movie Successfully added",
+                    "title":title,
+                    "poster": filename,
+                    "description":description})
+    e = form_errors(form)
+    if(e):
+        elst = {"errors": []}
+        elst['errors'] = e
+        result = jsonify(elst)
+    return result
+
+@app.route('/api/v1/csrf-token', methods=['GET'])
+def get_csrf():
+    return jsonify({'csrf_token': generate_csrf()})
 
 ###
 # The functions below should be applicable to all Flask apps.
