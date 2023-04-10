@@ -6,7 +6,7 @@ This file creates your application.
 """
 
 from app import app,db
-from flask import render_template, request, jsonify, send_file
+from flask import render_template, request, jsonify, url_for, send_from_directory
 import os
 from app.models import Movie
 from app.forms import MovieForm
@@ -44,16 +44,33 @@ def movies():
         db.session.add(Movie(title, description, filename))
         db.session.commit()
         
-        return jsonify({"message":"Movie Successfully added",
-                    "title":title,
-                    "poster": filename,
-                    "description":description})
-    e = form_errors(form)
-    if(e):
-        elst = {"errors": []}
-        elst['errors'] = e
-        result = jsonify(elst)
-    return result
+        return result
+    else: 
+        e = form_errors(form)
+        if(e):
+            elst = {"errors": []}
+            elst['errors'] = e
+            result = jsonify(elst)
+        return result
+
+@app.route('/api/v1/movies', methods=['GET'])
+def add_movies():
+    if request.method == 'GET':
+        movies = Movie.query.all()
+        data = []
+        for movie in movies:
+            data.append({
+                "id": movie.id,
+                "title": movie.title,
+                "description": movie.description,
+                "poster": url_for('get_posterimg', filename = movie.poster)
+            })
+    return jsonify(mov = data)
+
+@app.route('/api/v1/posters/<filename>')
+def get_posterimg(filename):
+    return send_from_directory(os.path.join(os.getcwd(), app.config['UPLOAD_FOLDER']), filename)
+    
 
 @app.route('/api/v1/csrf-token', methods=['GET'])
 def get_csrf():

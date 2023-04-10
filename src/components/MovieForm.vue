@@ -38,6 +38,7 @@
 <style>
     input[type="text"]{
         width: 400px;
+        border-color:black;
     }
     .f-alert{
         width:600px;
@@ -79,6 +80,8 @@
         margin-left:10px;
         border-radius: 5px;
         color:white;
+        border-style:none;
+        padding:10px;
     }
 </style>
 
